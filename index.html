@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Personal Portfolio - Kirsten Prinsen</title>
+    <link rel="stylesheet" href="CSS/style.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Kirsten Prinsen</h1>
+        <h2>Finance Student</h2>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="resume.html">Resume</a></li>
+                <li><a href="hobbies.html">Hobbies</a></li>
+                <li><a href="career.html">Career</a></li>
+                <li><a href="discover.html">Discover</a></li>
+                <li><a href="game.html">Game</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <!-- Profile Box -->
+        <section class="content-box profile-box">
+            <img src="images/resume.photo.professional.JPG" alt="image of professional headshot" class="profile-image">
+            <div class="profile-content">
+                <h2>About Me</h2>
+                <p>I'm a Finance major at the University of Minnesota Duluth with a strong interest in accounting, strategic planning, and real-world problem solving. I enjoy working through complex scenarios, exploring creative hobbies like hand embroidery, and traveling. I'm detail-oriented, resourceful, and always looking for ways to improve systems and make decisions more efficient.</p>
+            </div>
+        </section>
+
+        <!-- Hobbies Box -->
+        <section class="content-box hobbies-box">
+            <h2>My Interests & Hobbies</h2>
+            <div class="hobbies-grid">
+                <div class="hobby-item">
+                    <h3>Traveling</h3>
+                    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem;">
+                        <img src="images/castle.albania.jpg" alt="image of Albanian castle ruins" style="width: 100%; max-width: 300px; height: 250px; object-fit: cover; border-radius: 6px; border: 2px solid var(--museum-border); margin: 1rem 0;">
+                        <p style="font-size: 0.9rem; font-style: italic; color: var(--museum-text); text-align: center; margin-top: 0.5rem; margin-bottom: 1rem; font-family: 'Georgia', 'Times New Roman', serif;">
+                            (Castle ruins I visited in Albania)
+                        </p>
+                    </div>
+                    <p style="text-align: left;">I've developed a deep appreciation for travel after moving frequently across the U.S. due to my dad's military background. While Albania is the only country I've visited outside the U.S. so far, I've explored many regions across the country and learned to adapt quickly to new environments. I'm excited to expand that experience internationally through a future study abroad program in London, where I hope to grow both personally and professionally.</p>
+                </div>
+                <div class="hobby-item">
+                    <h3>Vinyl Collecting</h3>
+                    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem;">
+                        <img src="images/vinyl.collecting.png" alt="image of a vinyl record collection" style="width: 100%; max-width: 300px; height: 250px; object-fit: cover; border-radius: 6px; border: 2px solid var(--museum-border); margin: 1rem 0;">
+                        <p style="font-size: 0.9rem; font-style: italic; color: var(--museum-text); text-align: center; margin-top: 0.5rem; margin-bottom: 1rem; font-family: 'Georgia', 'Times New Roman', serif;">
+                            (My current vinyl collection)
+                        </p>
+                    </div>
+                    <p style="text-align: left;">I love collecting vinyl records — not just for the music, but for everything that comes with it. The colors, the artwork, the way each pressing feels a little different. Some albums I own five times over, just to get every color variant… which probably sounds a little crazy, but it's just so much fun. There's something satisfying about seeing them all lined up, knowing each one has its own story or memory attached. It's a hobby that mixes creativity, nostalgia, and a bit of joyful obsession.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Video Box -->
+        <section class="content-box video-box">
+            <h2>Get to Know Me</h2>
+            <div class="video-player">
+                <video controls style="width: 100%; height: 300px; border-radius: 8px;" preload="metadata">
+                    <source src="videos/intro.video.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </section>
+
+        <!-- Quote Section -->
+        <section class="content-box" style="text-align: center; background: var(--museum-light-beige); border: 1px solid var(--museum-border);">
+            <p style="font-size: 1.15rem; font-style: italic; color: var(--museum-text); margin: 0; text-align: center; font-family: 'Georgia', 'Times New Roman', serif;">
+                "We can make our plans, but the Lord determines our steps. - Proverbs 16:9"
+            </p>
+        </section>
+    </div>
+
+    <footer style="background: var(--museum-light-beige); padding: 2rem; text-align: center; border-top: 2px solid var(--museum-border); margin-top: 3rem; color: var(--museum-text); font-family: 'Georgia', 'Times New Roman', serif;">
+        <p style="font-size: 1rem; margin: 0;">© 2025 Kirsten Prinsen | University of Minnesota Duluth | Finance & Accounting</p>
+    </footer>
+</body>
+</html>

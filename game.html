@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Shop Catch Game</title>
+<link rel="stylesheet" href="CSS/style.css">
+</head>
+<body class="game-page">
+<div class="floating-petal">
+    <div class="petal petal-1"></div>
+    <div class="petal petal-2"></div>
+    <div class="petal petal-3"></div>
+    <div class="petal petal-4"></div>
+    <div class="petal petal-5"></div>
+    <div class="petal petal-6"></div>
+</div>
+
+    <div class="nav-bar">
+    <div class="nav-content">
+        <div>
+            <div class="nav-title">🌸 Coffee Shop Catch</div>
+            <div style="font-size: 0.75rem; color: var(--text-color); margin-top: 0.3rem; font-style: italic; font-weight: normal;">Creators: Kirsten Prinsen, Harmony Trygstad, and Emily Marciniak</div>
+        </div>
+        <a href="index.html" class="nav-link">🏠 Back to Home</a>
+    </div>
+</div>
+
+<div class="game-container">
+    <div class="spring-shop-bg"></div>
+    <div class="spring-decorations">
+        <div class="spring-flower"></div>
+        <div class="spring-flower"></div>
+        <div class="spring-flower"></div>
+        <div class="spring-flower"></div>
+    </div>
+
+    <div class="instructions">
+        <strong>🍩 Catch the Donuts!</strong><br>
+        Move your mouse to catch delicious donuts!<br>
+        Avoid the flies (dark) 🪰<br>
+        Catch the donuts (pastel) 🍩
+    </div>
+
+    <div class="level-indicator" id="levelIndicator">Level 1</div>
+    <div class="score" id="score">Score: 0</div>
+
+    <div class="health-container">
+        <div class="health-label">❤️ Health</div>
+        <div class="health-bar">
+            <div class="health-fill" id="healthFill" style="width: 100%;"></div>
+            <div class="health-text" id="healthText">100/100</div>
+        </div>
+    </div>
+
+    <!-- PIXEL MUG DESIGN -->
+    <div class="mug" id="mug"></div>
+    <div class="steam-line"></div>
+    <div class="steam-line"></div>
+    <div class="steam-line"></div>
+    
+    <!-- GAME OVER SCREEN -->
+    <div class="game-over" id="gameOver">
+        <h2>Game Over!</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button class="restart-btn" onclick="restartGame()">Play Again</button>
+    </div>
+</div>
+
+<script>
+class CoffeeShopGame {
+    constructor() {
+        this.canvas = document.querySelector('.game-container');
+        this.mug = document.getElementById('mug');
+        this.scoreElement = document.getElementById('score');
+        this.gameOverElement = document.getElementById('gameOver');
+        this.finalScoreElement = document.getElementById('finalScore');
+        this.levelIndicator = document.getElementById('levelIndicator');
+        this.healthFill = document.getElementById('healthFill');
+        this.healthText = document.getElementById('healthText');
+       
+        this.score = 0;
+        this.level = 1;
+        this.health = 100;
+        this.maxHealth = 100;
+        this.gameRunning = false;
+        this.fallingItems = [];
+        this.spawnRate = 3000; // milliseconds
+        this.fallSpeed = 1.5; // pixels per frame
+        this.badItemChance = 0.15; // 15% chance for bad items
+       
+        this.goodItems = ['🍩', '🍩', '🍩', '🍩', '🍩', '🍩', '🍩', '🍩']; // All donuts!
+        this.badItems = ['🪰', '🪰', '🪰', '🪰', '🪰', '🪰', '🪰', '🪰']; // All flies!
+        
+        // Audio system
+        this.audioContext = null;
+        this.gameMusicGain = null;
+        this.gameOverMusicGain = null;
+        this.sfxGain = null;
+        this.backgroundMusicOscillator = null;
+        this.gameOverMusicOscillator = null;
+        this.musicType = 'upbeat'; // 'upbeat' or 'sad'
+        
+        this.init();
+    }
+     
+    init() {
+        this.setupEventListeners();
+        this.setupAudio();
+        // Don't start game immediately, wait for user interaction to resume audio
+        this.startGame();
+    }
+    
+    setupAudio() {
+        // Initialize Web Audio Context
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create gain nodes for volume control
+        this.gameMusicGain = this.audioContext.createGain();
+        this.gameOverMusicGain = this.audioContext.createGain();
+        this.sfxGain = this.audioContext.createGain();
+        
+        // Connect gain nodes to audio context destination
+        this.gameMusicGain.connect(this.audioContext.destination);
+        this.gameOverMusicGain.connect(this.audioContext.destination);
+        this.sfxGain.connect(this.audioContext.destination);
+        
+        // Set initial volumes
+        this.gameMusicGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        this.gameOverMusicGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        this.sfxGain.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+    }
+    
+    startUpbeatMusic() {
+        if (!this.audioContext) return;
+        
+        // Stop any existing music first
+        this.stopAllMusic();
+        this.musicType = 'upbeat';
+        
+        // Ensure gain node is properly set up
+        this.gameMusicGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.gameMusicGain;
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        oscillator.type = 'triangle';
+        
+        // Create a pleasant melody pattern
+        const melody = [
+            440, 523, 587, 659, 587, 523, 440, 392, // C5-C6-D6-E6-D6-C6-C5-B5
+            440, 523, 659, 784, 659, 587, 523, 440  // C5-C6-E6-G6-E6-D6-C6-C5
+        ];
+        
+        let noteIndex = 0;
+        const playNextNote = () => {
+            if (this.musicType !== 'upbeat' || !this.gameRunning) {
+                try {
+                    oscillator.stop();
+                    oscillator.disconnect();
+                } catch (e) {
+                    // Oscillator might already be stopped
+                }
+                return;
+            }
+            
+            const frequency = melody[noteIndex];
+            oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+            
+            noteIndex = (noteIndex + 1) % melody.length;
+            
+            // Schedule next note
+            setTimeout(playNextNote, 200);
+        };
+        
+        playNextNote();
+        oscillator.start();
+        this.backgroundMusicOscillator = oscillator;
+    }
+    
+    startSadMusic() {
+        if (!this.audioContext) return;
+        
+        // Ensure ALL music is completely stopped first
+        this.stopAllMusic();
+        
+        // Give a brief pause to ensure complete audio cleanup
+        setTimeout(() => {
+            this.musicType = 'sad';
+            
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.gameOverMusicGain;
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            oscillator.type = 'sawtooth';
+            
+            // Create a sad melody pattern
+            const sadMelody = [
+                440, 392, 349, 329, 349, 392, 440, 392, // C5-B5-A5-G5-A5-B5-C5-B5
+                392, 349, 329, 293, 329, 349, 392, 349  // B5-A5-G5-F5-G5-A5-B5-A5
+            ];
+            
+            let noteIndex = 0;
+            const playNextNote = () => {
+                if (this.musicType !== 'sad') {
+                    try {
+                        oscillator.stop();
+                        oscillator.disconnect();
+                    } catch (e) {
+                        // Oscillator might already be stopped
+                    }
+                    return;
+                }
+                
+                const frequency = sadMelody[noteIndex];
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                
+                noteIndex = (noteIndex + 1) % sadMelody.length;
+                
+                // Schedule next note
+                setTimeout(playNextNote, 400);
+            };
+            
+            playNextNote();
+            oscillator.start();
+            this.gameOverMusicOscillator = oscillator;
+        }, 100); // Small delay to ensure clean switching
+    }
+    
+    stopAllMusic() {
+        this.musicType = 'none';
+        
+        // Stop upbeat music completely
+        if (this.backgroundMusicOscillator) {
+            try {
+                this.backgroundMusicOscillator.stop();
+                this.backgroundMusicOscillator.disconnect();
+            } catch (e) {
+                // Oscillator might already be stopped
+            }
+            this.backgroundMusicOscillator = null;
+        }
+        
+        // Stop sad music completely
+        if (this.gameOverMusicOscillator) {
+            try {
+                this.gameOverMusicOscillator.stop();
+                this.gameOverMusicOscillator.disconnect();
+            } catch (e) {
+                // Oscillator might already be stopped
+            }
+            this.gameOverMusicOscillator = null;
+        }
+        
+        // Reset gain nodes to prevent lingering audio
+        if (this.gameMusicGain) {
+            this.gameMusicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        }
+        if (this.gameOverMusicGain) {
+            this.gameOverMusicGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        }
+    }
+    
+    playNegativeSFX() {
+        if (!this.audioContext) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.sfxGain);
+        
+        oscillator.type = 'square';
+        
+        // Create a negative sound: descending frequencies
+        oscillator.frequency.setValueAtTime(300, this.audioContext.currentTime);
+        oscillator.frequency.linearRampToValueAtTime(150, this.audioContext.currentTime + 0.3);
+        
+        // Fade out quickly
+        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+        
+        oscillator.start();
+        oscillator.stop(this.audioContext.currentTime + 0.3);
+    }
+    
+    playGameOverSFX() {
+        if (!this.audioContext) return;
+        
+        // Play a few descending notes
+        const frequencies = [440, 392, 349, 293];
+        frequencies.forEach((freq, index) => {
+            setTimeout(() => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.sfxGain);
+                
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+                
+                oscillator.start();
+                oscillator.stop(this.audioContext.currentTime + 0.5);
+            }, index * 200);
+        });
+    }
+    
+    resumeAudioContext() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+    }
+     
+    setupEventListeners() {
+        // Mouse movement
+        document.addEventListener('mousemove', (e) => {
+            if (this.gameRunning) {
+                const containerRect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - containerRect.left;
+                const mugWidth = 100;
+                const maxX = containerRect.width - mugWidth; // Allow cup to reach all the way to the edge
+                
+                let newX = Math.max(0, Math.min(mouseX - mugWidth/2, maxX));
+                this.mug.style.left = newX + 'px';
+            }
+        });
+
+        // Touch movement
+        document.addEventListener('touchmove', (e) => {
+            if (this.gameRunning) {
+                e.preventDefault(); // Prevent scrolling
+                const touch = e.touches[0];
+                const containerRect = this.canvas.getBoundingClientRect();
+                const touchX = touch.clientX - containerRect.left;
+                const mugWidth = 100;
+                const maxX = containerRect.width - mugWidth;
+                
+                let newX = Math.max(0, Math.min(touchX - mugWidth/2, maxX));
+                this.mug.style.left = newX + 'px';
+            }
+        }, { passive: false });
+    }
+     
+    startGame() {
+        this.gameRunning = true;
+        this.score = 0;
+        this.level = 1;
+        this.health = this.maxHealth;
+        this.spawnRate = 3000;
+        this.fallSpeed = 1.5;
+        this.badItemChance = 0.15;
+        this.fallingItems = [];
+        
+        this.resumeAudioContext();
+        this.startUpbeatMusic();
+       
+        this.updateScore();
+        this.updateLevel();
+        this.updateHealth();
+        this.gameOverElement.style.display = 'none';
+       
+        this.spawnItems();
+        this.gameLoop();
+    }
+     
+    spawnItems() {
+        if (!this.gameRunning) return;
+       
+        const isBad = Math.random() < this.badItemChance;
+        const items = isBad ? this.badItems : this.goodItems;
+        const item = items[Math.floor(Math.random() * items.length)];
+       
+        const fallingItem = document.createElement('div');
+        fallingItem.className = `falling-item ${isBad ? 'bad-item' : 'good-item'}`;
+        fallingItem.textContent = item;
+        fallingItem.style.left = Math.random() * (window.innerWidth - 50) + 'px';
+        fallingItem.style.top = '-50px';
+       
+        this.canvas.appendChild(fallingItem);
+        this.fallingItems.push({
+            element: fallingItem,
+            isBad: isBad,
+            x: parseInt(fallingItem.style.left),
+            y: -50,
+            speed: this.fallSpeed + Math.random() * 1
+        });
+       
+        setTimeout(() => this.spawnItems(), this.spawnRate);
+    }
+     
+    gameLoop() {
+        if (!this.gameRunning) return;
+       
+        this.updateFallingItems();
+        this.checkCollisions();
+        this.updateLevel();
+       
+        requestAnimationFrame(() => this.gameLoop());
+    }
+     
+    updateFallingItems() {
+        this.fallingItems.forEach((item, index) => {
+            item.y += item.speed;
+            item.element.style.top = item.y + 'px';
+         
+            // Remove items that fall off screen
+            if (item.y > window.innerHeight + 50) {
+                if (!item.isBad) {
+                    // Missed a donut - lose health
+                    this.decreaseHealth(15);
+                    this.playNegativeSFX();
+                }
+               
+                if (item.element.parentNode) {
+                    item.element.parentNode.removeChild(item.element);
+                }
+                this.fallingItems.splice(index, 1);
+            }
+        });
+    }
+     
+    checkCollisions() {
+        const mugRect = this.mug.getBoundingClientRect();
+       
+        this.fallingItems.forEach((item, index) => {
+            const itemRect = item.element.getBoundingClientRect();
+         
+            // Check collision between mug and item
+            if (itemRect.bottom >= mugRect.top &&
+                itemRect.top <= mugRect.bottom &&
+                itemRect.left < mugRect.right &&
+                itemRect.right > mugRect.left) {
+           
+                if (item.isBad) {
+                    // Caught a fly - lose health
+                    this.decreaseHealth(20);
+                    this.createParticles(itemRect.left + 25, itemRect.top + 25, '#FF6B6B');
+                    this.playNegativeSFX();
+                } else {
+                    // Caught a donut - gain points
+                    this.score += 10;
+                    this.createParticles(itemRect.left + 25, itemRect.top + 25, '#FFE4E1');
+                }
+           
+                // Remove item
+                if (item.element.parentNode) {
+                    item.element.parentNode.removeChild(item.element);
+                }
+                this.fallingItems.splice(index, 1);
+           
+                this.updateScore();
+            }
+        });
+    }
+     
+    createParticles(x, y, color) {
+        for (let i = 0; i < 8; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            particle.style.background = color;
+         
+            this.canvas.appendChild(particle);
+         
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            }, 600);
+        }
+    }
+     
+    updateScore() {
+        this.scoreElement.textContent = `Score: ${this.score}`;
+    }
+     
+    updateHealth() {
+        const healthPercentage = (this.health / this.maxHealth) * 100;
+        this.healthFill.style.width = healthPercentage + '%';
+        this.healthText.textContent = `${this.health}/${this.maxHealth}`;
+       
+        // Change health bar color based on health level
+        if (healthPercentage > 60) {
+            this.healthFill.style.background = 'linear-gradient(90deg, #44ff44 0%, #88ff88 100%)';
+        } else if (healthPercentage > 30) {
+            this.healthFill.style.background = 'linear-gradient(90deg, #ffaa44 0%, #ffcc66 100%)';
+        } else {
+            this.healthFill.style.background = 'linear-gradient(90deg, #ff4444 0%, #ff6666 100%)';
+        }
+    }
+     
+    decreaseHealth(amount) {
+        this.health = Math.max(0, this.health - amount);
+        this.updateHealth();
+       
+        // Add visual feedback for health loss
+        this.healthFill.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            this.healthFill.style.transform = 'scale(1)';
+        }, 200);
+       
+        // Check if game should end
+        if (this.health <= 0) {
+            this.gameOver();
+        }
+    }
+     
+    updateLevel() {
+        const newLevel = Math.floor(this.score / 50) + 1;
+        if (newLevel > this.level) {
+            this.level = newLevel;
+            this.levelIndicator.textContent = `Level ${this.level}`;
+         
+            // Increase difficulty more gradually
+            this.spawnRate = Math.max(1500, this.spawnRate - 150);
+            this.fallSpeed = Math.min(4, this.fallSpeed + 0.3);
+            this.badItemChance = Math.min(0.4, this.badItemChance + 0.03);
+        }
+    }
+     
+    gameOver() {
+        this.gameRunning = false;
+        this.finalScoreElement.textContent = this.score;
+        this.gameOverElement.style.display = 'block';
+        
+        // Play game over audio
+        this.stopAllMusic();
+        this.startSadMusic();
+        this.playGameOverSFX();
+       
+        // Clear all falling items
+        this.fallingItems.forEach(item => {
+            if (item.element.parentNode) {
+                item.element.parentNode.removeChild(item.element);
+            }
+        });
+        this.fallingItems = [];
+    }
+}
+
+// Initialize game
+let game;
+
+function restartGame() {
+    if (game) {
+        game.startGame();
+    } else {
+        game = new CoffeeShopGame();
+    }
+}
+
+// Add click event to restart button to ensure audio context is resumed
+document.addEventListener('DOMContentLoaded', () => {
+    const restartBtn = document.querySelector('.restart-btn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', () => {
+            if (game) {
+                game.resumeAudioContext();
+            }
+        });
+    }
+});
+
+// Start the game when page loads
+window.addEventListener('load', () => {
+    game = new CoffeeShopGame();
+});
+
+// Resume audio context on first user interaction (required by browsers)
+document.addEventListener('click', () => {
+    if (game) {
+        game.resumeAudioContext();
+    }
+}, { once: true });
+</script>
+</body>
+</html>
